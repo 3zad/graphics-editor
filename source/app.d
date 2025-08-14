@@ -6,7 +6,7 @@ import std.math.algebraic : sqrt;
 import std.math.exponential : pow;
 import core.exception;
 
-import algo.matrix;
+import algo.matrix : test;
 
 void naturalCubicSpline(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, int numPoints, double alpha=0.5) {
 
@@ -56,6 +56,10 @@ void drawSquare(Color[][] canvas, int a, int b, int radius) {
 
 void main()
 {
+	test();
+	while (true) {
+		
+	}
     validateRaylibBinding();
     InitWindow(800, 800, "Canvas");
     SetTargetFPS(60);
@@ -66,7 +70,7 @@ void main()
 	int brushThickness = 5;
 
 	Color[][] canvas;
-
+  
 	for (int y = 0; y < width; y++) {
 		Color[] row;
 		for (int x = 0; x < height; x++) {

@@ -1,30 +1,31 @@
 module algo.matrix;
 
+// No need for a general solution because no larger/smaller matricies are used as of now
+import std.stdio;
 import mir.ndslice.slice: sliced;
 import kaleidic.lubeck: mldivide;
+import core.math : sqrt;
+import std.conv : to;
 
-// No need for a general solution because no larger/smaller matricies are used as of now
-int cubicSolver()
+void test()
 {
-    auto a = [
-         1, -1,  1,
-         2,  2, -4,
-        -1,  5,  0].sliced(3, 3);
-    auto b = [
-         2.0,  0,
-        -6  , -6,
-         9  ,  1].sliced(3, 2);
-    auto t = [
-         1.0, -1,
-         2  ,  0,
-         3  ,  1].sliced(3, 2);
+    double[] a = [
+         0, 0,  1,
+         1,  1, 1,
+        4,  2,  1];
+    double[] b = [
+         0,
+         1,
+         4];
+    cubicSpline(a, b);
+}
+    
 
-    auto x = a.mldivide(b);
+void cubicSpline(double[] a, double[] b) {
+    // Given non-malformed input, the side length of matrix a will be the square root of its length
+    int sideLength = to!int(sqrt(to!float(a.length)));
 
-    // Check result
-    if(x != t)
-        return 1;
-
-    // OK
-    return 0;
+    // Perform AX=B operation
+    auto x = a.sliced(sideLength,sideLength).mldivide(b.sliced(sideLength,1));
+    writeln(x);
 }
