@@ -6,15 +6,13 @@ import std.math.algebraic : sqrt;
 import std.math.exponential : pow;
 import core.exception;
 
-import algo.matrix : test;
+import algo.matrix;
+import data.config;
 
-void naturalCubicSpline(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, int numPoints, double alpha=0.5) {
 
-}
 
-void catmullRomSpline(Vector2 p0, Vector2 p1, Vector2 p2, Vector2 p3, int numPoints, double alpha=0.5) {
-
-}
+int brushThickness = 5;
+Color[][] canvas;
 
 void pixel(Color[][] canvas, int a, int b) {
 	try {
@@ -34,7 +32,6 @@ void draw(Color[][] canvas, int a, int b, int radius) {
 				int drawX = a + x;
 				int drawY = b + y;
 				pixel(canvas, drawX, drawY);
-
 			}
 		}
 	}
@@ -54,22 +51,68 @@ void drawSquare(Color[][] canvas, int a, int b, int radius) {
 	}
 }
 
+void linear(Vector2 pos, Vector2 oldPos) {
+	pos.x /= (GetScreenWidth()/width);
+	pos.y /= (GetScreenHeight()/height);
+
+	double dx = pos.x - oldPos.x;
+	double dy = pos.y - oldPos.y;
+	double distance = sqrt(dx*dx + dy*dy);
+
+	for (int i = 0; i < to!int(distance); ++i) {
+		double t = i / distance;
+		double a = oldPos.x + dx * t;
+		double b = oldPos.y + dy * t;
+
+		int intA = to!int(a);
+		int intB = to!int(b);
+		draw(canvas, intA, intB, brushThickness);
+	}
+}
+
+void naturalCubicSpline(Vector2 firstPos, Vector2 secondPos, Vector2 thirdPos) {
+	double firstSlope = (secondPos.y - firstPos.y) / (secondPos.x - firstPos.x);
+	double secondSlope = (thirdPos.y - secondPos.y) / (thirdPos.x - secondPos.x);
+
+	auto polynomial = solveNsizedMatrix(
+		[
+			pow(firstPos.x,3), pow(firstPos.x,2), firstPos.x, 1,
+			pow(secondPos.x, 3), pow(secondPos.y, 2), secondPos.x, 1,
+			3*pow(firstPos.x, 2), 2*firstPos.x, 1, 0,
+			3*pow(secondPos.x, 2), 2*secondPos.x, 1, 0
+		],
+		[
+			firstPos.y,
+			secondPos.y,
+			firstSlope,
+			secondSlope
+		]
+	);
+
+	writeln(polynomial);
+
+	double xDistance = secondPos.x - firstPos.x;
+
+	double xPosOld = firstPos.x;
+
+	for (int i = 0; i < to!int(xDistance); ++i) {
+		double t = i / xDistance;
+
+		double xPos = firstPos.x + t * xDistance;
+		double yPos = polynomial[0][0]*pow(xPos, 3) + polynomial[1][0]*pow(xPos, 2) + polynomial[2][0]*xPos + polynomial[3][0];
+		double yPosOld = polynomial[0][0]*pow(xPosOld, 3) + polynomial[1][0]*pow(xPosOld, 2) + polynomial[2][0]*xPosOld + polynomial[3][0];
+		linear(Vector2(xPosOld, yPosOld), Vector2(xPos, yPos));
+
+		xPosOld = xPos;
+	}
+}
+
 void main()
 {
-	test();
-	while (true) {
-		
-	}
+
     validateRaylibBinding();
-    InitWindow(800, 800, "Canvas");
+    InitWindow(width, height, "Canvas");
     SetTargetFPS(60);
- 
-	int width = 800;
-	int height = 800;
-
-	int brushThickness = 5;
-
-	Color[][] canvas;
   
 	for (int y = 0; y < width; y++) {
 		Color[] row;
@@ -84,6 +127,12 @@ void main()
 		canvas ~= row;
 	}
 
+
+	naturalCubicSpline(Vector2(100, 400), Vector2(200, 500), Vector2(300, 400));
+	naturalCubicSpline(Vector2(100, 400), Vector2(200, 300), Vector2(300, 400));
+
+	naturalCubicSpline(Vector2(300, 800), Vector2(400, -2000), Vector2(500, 800));
+	naturalCubicSpline(Vector2(400, -2000), Vector2(500, 800), Vector2(0, 0));
 
 	Vector2 pos;
 	Vector2 oldPos;
@@ -100,22 +149,8 @@ void main()
 				oldPos = pos;
 			}
 
-			pos.x /= (GetScreenWidth()/width);
-			pos.y /= (GetScreenHeight()/height);
+			linear(pos, oldPos);
 
-			double dx = pos.x - oldPos.x;
-			double dy = pos.y - oldPos.y;
-			double distance = sqrt(dx*dx + dy*dy);
-
-			for (int i = 0; i < to!int(distance); ++i) {
-				double t = i / distance;
-				double a = oldPos.x + dx * t;
-				double b = oldPos.y + dy * t;
-
-				int intA = to!int(a);
-				int intB = to!int(b);
-				draw(canvas, intA, intB, brushThickness);
-			}
 			oldPos = pos;
 		}
 
